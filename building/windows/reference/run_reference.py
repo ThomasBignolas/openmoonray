@@ -180,8 +180,14 @@ def main():
         run(['systemd-detect-virt'], 'virtualization', check=False)
         if 'avx2' not in Path('/proc/cpuinfo').read_text():
             raise RuntimeError('The published renderer requires AVX2')
+        # Hosted runners may install CMake outside /usr/bin. Resolve build tools
+        # before the renderer's isolated PATH replaces the runner environment.
+        host_tools = {tool: shutil.which(tool) for tool in ('git', 'cmake', 'ctest')}
+        if not all(host_tools.values()):
+            raise RuntimeError('Missing host build tools: ' + repr(host_tools))
+        state['host_tools'] = host_tools
         for tool in ('git', 'cmake', 'ctest'):
-            run([tool, '--version'], tool+'-version')
+            run([host_tools[tool], '--version'], tool+'-version')
         runtime = args.runtime_root.resolve() if args.runtime_root else work/'snap'
         if not args.runtime_root:
             snap_file = args.snap_file.resolve() if args.snap_file else work/'openmoonray.snap'
@@ -222,8 +228,8 @@ def main():
         run(['git', '-C', source/'rats', 'apply', patch], 'harness-apply')
         (source/'CMakeLists.txt').write_text('cmake_minimum_required(VERSION 3.23.1)\nproject(MoonRayReferenceTests LANGUAGES C CXX)\ninclude(CTest)\nlist(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cmake")\nadd_subdirectory(rats)\n')
         build = work/'build'
-        run(['cmake', '-S', source, '-B', build, '-DBUILD_TESTING=ON', '-DPython_EXECUTABLE=/usr/bin/python3'], 'configure', env=env)
-        manifest = json.loads(subprocess.check_output(['ctest', '--test-dir', build, '--show-only=json-v1', '-L', '^rats$', '-L', '^update$', '-L', '^(scalar|vector|default)$'], env=env))
+        run([host_tools['cmake'], '-S', source, '-B', build, '-DBUILD_TESTING=ON', '-DPython_EXECUTABLE=/usr/bin/python3'], 'configure', env=env)
+        manifest = json.loads(subprocess.check_output([host_tools['ctest'], '--test-dir', build, '--show-only=json-v1', '-L', '^rats$', '-L', '^update$', '-L', '^(scalar|vector|default)$'], env=env))
         (evidence/'update-manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
         tests = select_tests(manifest, args.scope, args.shard, args.shards)
         if not tests:
@@ -241,7 +247,7 @@ def main():
         if args.configure_only:
             return
         expression = '^('+'|'.join(re.escape(t['name']) for t in tests)+')$'
-        result = run(['ctest', '--test-dir', build, '--output-on-failure', '--no-tests=error', '-j', '1',
+        result = run([host_tools['ctest'], '--test-dir', build, '--output-on-failure', '--no-tests=error', '-j', '1',
                       '--timeout', '7200', '--output-junit', evidence/'update-results.xml', '-R', expression], 'update', env=env, check=False)
         shutil.copytree(build/'Testing', evidence/'Testing', dirs_exist_ok=True)
         files = [{'path': p.relative_to(evidence).as_posix(), 'size': p.stat().st_size, 'sha256': sha(p)}
