@@ -1,0 +1,164 @@
+{
+  "snap": {
+    "file": "openmoonray_23.snap",
+    "size": 483471360,
+    "sha3_384": "3c79b5ccdd0932e3dd20e184eb96a5d74a816d159f9db22776598fdcb0c440bcf1084ef10ae1eeeedbe74a902b6c0c13",
+    "channel": "edge",
+    "revision": 23,
+    "version": "v2026.29.1-80-g336a89c",
+    "url": "https://api.snapcraft.io/api/v1/snaps/download/BYmkAC0lazOJSR0yvYgcg7cdZ8Yj5Qdn_23.snap"
+  },
+  "rats": {
+    "url": "https://github.com/OpenMoonRay/rats.git",
+    "commit": "f1278e08878edc6081ca119c03df5d34f0b4b4d5"
+  },
+  "cmake_modules": {
+    "url": "https://github.com/OpenMoonRay/cmake_modules.git",
+    "commit": "1b1b7af8111b0a8ceaff45f3c47a778b0ca07ec4"
+  },
+  "harness_patch_sha256": "654cba18094267a3602ebd4bf9123419368aa231ae3993dc4cb74a591b8895c3",
+  "runtime_files": [
+    {
+      "path": "opt/MoonRay/installs/openmoonray/bin/moonray",
+      "sha256": "f76479562f412138f2726e7b0265de576994decd894fa177df7cf094ac97fd45"
+    },
+    {
+      "path": "opt/MoonRay/installs/openmoonray/bin/hd_render",
+      "sha256": "f6a07f069a29219e6069ca09e78e412772f93a52f2bef9020b4837c63a33cb15"
+    },
+    {
+      "path": "opt/MoonRay/installs/openmoonray/bin/hd_usd2rdl",
+      "sha256": "69bdad585fb71ee2c62db5b2760dd86cdf17877fe8fad3a5547aa5ebfc5cc453"
+    },
+    {
+      "path": "opt/MoonRay/installs/openmoonray/lib/librendering_pbr.so",
+      "sha256": "c6aff60a469f6cba0ce4747506af9cdf5f90d2eadb2c5423cc30f071ca2cda7a"
+    },
+    {
+      "path": "opt/MoonRay/installs/openmoonray/lib/librendering_geom.so",
+      "sha256": "01ef9d54067039b9c5cc056f595b3da89a4e28da54c23fce3a0635095f1b1ea4"
+    }
+  ],
+  "renderer_components": [
+    {
+      "path": "arras/arras4_core",
+      "linux_base_commit": "17c49f115dc9c849003cfa15aa05869c97c5d801",
+      "windows_base_commit": "17c49f115dc9c849003cfa15aa05869c97c5d801",
+      "base_commits_match": true
+    },
+    {
+      "path": "arras/arras_render",
+      "linux_base_commit": "780ce9daac0e9e3271165a3c3707076b8b214099",
+      "windows_base_commit": "780ce9daac0e9e3271165a3c3707076b8b214099",
+      "base_commits_match": true
+    },
+    {
+      "path": "arras/distributed/arras4_node",
+      "linux_base_commit": "e5ccf1abe34d172203cc8febd027c850a1d9a843",
+      "windows_base_commit": "e5ccf1abe34d172203cc8febd027c850a1d9a843",
+      "base_commits_match": true
+    },
+    {
+      "path": "arras/distributed/minicoord",
+      "linux_base_commit": "0b9ad46536db0c0e2dfa632cd079807026fd9b8f",
+      "windows_base_commit": "0b9ad46536db0c0e2dfa632cd079807026fd9b8f",
+      "base_commits_match": true
+    },
+    {
+      "path": "cmake_modules",
+      "linux_base_commit": "6e4c94b4d1376962f631284378ea859e66199e1b",
+      "windows_base_commit": "1b1b7af8111b0a8ceaff45f3c47a778b0ca07ec4",
+      "base_commits_match": false
+    },
+    {
+      "path": "moonray/hydra/hdMoonray",
+      "linux_base_commit": "986121dbb8817237c02a254d0c4470b5eb820f9e",
+      "windows_base_commit": "986121dbb8817237c02a254d0c4470b5eb820f9e",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/hydra/moonray_sdr_plugins",
+      "linux_base_commit": "36a097e8d2796e138d0720a47b2ce79f89931af7",
+      "windows_base_commit": "36a097e8d2796e138d0720a47b2ce79f89931af7",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/materialx_shaders",
+      "linux_base_commit": "9b83c0051418e09869c14e2a86abe788a7ab7dca",
+      "windows_base_commit": "9b83c0051418e09869c14e2a86abe788a7ab7dca",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/mcrt_denoise",
+      "linux_base_commit": "0050e726309a533e7964bd05380430e6b06cce7a",
+      "windows_base_commit": "0050e726309a533e7964bd05380430e6b06cce7a",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/moonray",
+      "linux_base_commit": "eef67ae992b5037943a7716cca96ed443c36dcec",
+      "windows_base_commit": "eef67ae992b5037943a7716cca96ed443c36dcec",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/moonray_arras/mcrt_computation",
+      "linux_base_commit": "ce2bd3d58d7fa0b09edc672333fa820a97020deb",
+      "windows_base_commit": "ce2bd3d58d7fa0b09edc672333fa820a97020deb",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/moonray_arras/mcrt_dataio",
+      "linux_base_commit": "7d522815b566b215f6e48afd130a0fcb927efcfa",
+      "windows_base_commit": "7d522815b566b215f6e48afd130a0fcb927efcfa",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/moonray_arras/mcrt_messages",
+      "linux_base_commit": "fe95e9655a868eb0667c7ec1d2d6e9dcd53b1619",
+      "windows_base_commit": "fe95e9655a868eb0667c7ec1d2d6e9dcd53b1619",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/moonray_dcc_plugins",
+      "linux_base_commit": "5e19b0d8ef9afa37e7db437bde8e12960ff493b3",
+      "windows_base_commit": "5e19b0d8ef9afa37e7db437bde8e12960ff493b3",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/moonray_gui",
+      "linux_base_commit": "c16b83d304046442138486d278ea475365e6b72c",
+      "windows_base_commit": "c16b83d304046442138486d278ea475365e6b72c",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/moonshine",
+      "linux_base_commit": "a3c8667298a23df7d6efed128cb475484de66c8e",
+      "windows_base_commit": "a3c8667298a23df7d6efed128cb475484de66c8e",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/moonshine_usd",
+      "linux_base_commit": "ee188dd2ce31906316e474dc033ba1274b045669",
+      "windows_base_commit": "ee188dd2ce31906316e474dc033ba1274b045669",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/render_profile_viewer",
+      "linux_base_commit": "b092e183a7194306a791008a8783c56c4487ed00",
+      "windows_base_commit": "b092e183a7194306a791008a8783c56c4487ed00",
+      "base_commits_match": true
+    },
+    {
+      "path": "moonray/scene_rdl2",
+      "linux_base_commit": "d3da03498c261993b50dc2a084f5931b7bfc17dd",
+      "windows_base_commit": "1229d3eaa1ee41dc1ddefbe781c623edceafbac8",
+      "base_commits_match": false
+    },
+    {
+      "path": "rats",
+      "linux_base_commit": "f1278e08878edc6081ca119c03df5d34f0b4b4d5",
+      "windows_base_commit": "f1278e08878edc6081ca119c03df5d34f0b4b4d5",
+      "base_commits_match": true
+    }
+  ]
+}

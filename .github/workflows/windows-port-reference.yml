@@ -1,0 +1,65 @@
+name: Windows port - independent Linux references
+
+on:
+  push:
+    branches: [codex/windows-reference-validation]
+    paths:
+      - .github/workflows/windows-port-reference.yml
+      - building/windows/reference/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-references-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      scope: ${{ steps.plan.outputs.scope }}
+      shards: ${{ steps.plan.outputs.shards }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - id: plan
+        run: python3 building/windows/reference/run_reference.py --emit-plan
+
+  reference:
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      REFERENCE_SCOPE: ${{ needs.plan.outputs.scope }}
+      REFERENCE_SHARDS: ${{ needs.plan.outputs.shards }}
+      REFERENCE_SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Install extraction utility on the hosted runner
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends squashfs-tools git-lfs
+      - name: Generate references with the published Linux renderer
+        run: |
+          python3 building/windows/reference/run_reference.py \
+            --work "$RUNNER_TEMP/moonray-reference" \
+            --scope "$REFERENCE_SCOPE" \
+            --shard "$REFERENCE_SHARD" --shards "$REFERENCE_SHARDS"
+      - name: Preserve references, provenance and failures
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: linux-references-${{ needs.plan.outputs.scope }}-${{ matrix.shard }}
+          path: ${{ runner.temp }}/moonray-reference/evidence/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
