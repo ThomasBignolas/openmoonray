@@ -384,8 +384,10 @@ def show_settings():
 
 
 def documentation():
-    root = Path(hou.getenv('MOONRAY_HOUDINI_ROOT')).parents[3]
-    hou.ui.showInFileBrowser(str(root / 'building/windows/houdini/README.md'))
+    installation = Path(hou.getenv('MOONRAY_HOUDINI_ROOT'))
+    bundled = installation.parent / 'docs/HOUDINI.md'
+    guide = bundled if bundled.is_file() else installation.parents[3] / 'building/windows/houdini/README.md'
+    hou.ui.showInFileBrowser(str(guide))
 
 
 def run(action, *args, **kwargs):

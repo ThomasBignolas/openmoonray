@@ -34,6 +34,7 @@ def main():
             shutil.copy2(source, output / source.name)
     (output / 'docs').mkdir()
     shutil.copy2(here / 'README.md', output / 'docs/HOUDINI.md')
+    shutil.copy2(here / 'PORTABLE.md', output / 'docs/PORTABLE.md')
     shutil.copy2(here.parents[2] / 'LICENSE', output / 'LICENSE')
     (output / 'tests').mkdir()
     for name in ('run_bounded.py', 'validate_default_sphere.py'):

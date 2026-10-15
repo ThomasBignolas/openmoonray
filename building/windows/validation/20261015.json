@@ -43,6 +43,7 @@
     "Camera framing passes on a flat mesh; the earlier dense orthographic primitive-grid failure remains unresolved.",
     "Concurrent unqueued sends reproduced framing corruption; this does not prove the cause of every earlier ALab failure."
   ],
-  "portable_archive_bytes": 344679306,
-  "portable_archive_sha256": "eb3a4e242a990b34ff37afbbbd75d2ff58f3da07c9f41f924dfeb1c437ab56f8"
+  "portable_archive_bytes": 344680977,
+  "portable_archive_sha256": "28960029184b068237d4755e9cc2e61ea5efe0e5a1ea4479b71c3abb9d93d83e",
+  "final_portable_render_runtime_matches_tested_bundle": true
 }
