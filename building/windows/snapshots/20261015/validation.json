@@ -1,8 +1,8 @@
 {
   "archive": "moonray-windows-source.zip",
-  "sha256": "57ab1d1c65c1e7e96a88696cb86733de753da3f89a18ff75c92cb58c40ff68b4",
-  "files_verified": 203,
+  "sha256": "9b6767f13c646f56c40a485bf97caba5954d76af63010619963cfa71865bf50e",
+  "files_verified": 213,
   "repositories_recorded": 21,
-  "patches_checked_against_base": 14,
-  "added_source_files": 187
+  "patches_checked_against_base": 15,
+  "added_source_files": 196
 }

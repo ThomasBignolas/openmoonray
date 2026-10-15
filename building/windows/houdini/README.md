@@ -7,6 +7,11 @@ For another Windows PC, see [the portable package guide](PORTABLE.md). The bundl
 includes a user-level installer that rewrites its host and worker paths after
 extraction; copying the current workstation's package JSON alone is insufficient.
 
+For a future classroom pool feeding one viewport, see the
+[Arras preparation kit](../classroom/README.md). Coordinator and network checks
+are available; the native Windows node/router port and two-PC rendering are
+still outstanding. The normal installed package continues to render locally.
+
 ## Worker reliability and recovery
 
 The October 15 reliability update uses Arras's existing asynchronous send queue

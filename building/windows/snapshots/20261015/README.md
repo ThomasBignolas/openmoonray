@@ -2,7 +2,7 @@
 
 The ZIP includes changes inside every modified submodule, root Windows build and
 test scripts, Houdini assets and the portable packaging tools. Its manifest pins
-all 21 repository revisions. All 14 patches were checked against their bases.
+all 21 repository revisions. All 15 patches were checked against their bases.
 Follow APPLY.txt inside the archive using a separate clean checkout.
 
 The root scripts on this branch are also available for browsing. The submodule

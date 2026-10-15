@@ -1,0 +1,12 @@
+{
+  "coordinator": "127.0.0.1",
+  "coordinator_port": 8888,
+  "render_workers": 2,
+  "worker_threads": 4,
+  "worker_memory_mb": 6144,
+  "merge_threads": 1,
+  "merge_memory_mb": 1024,
+  "dispatch_memory_mb": 256,
+  "fps": 5,
+  "execution_mode": "vectorized"
+}

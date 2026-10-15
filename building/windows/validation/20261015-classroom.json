@@ -1,0 +1,27 @@
+{
+  "stage": "preparation-only",
+  "tests": {
+    "passed": true,
+    "tests": 8,
+    "render_workers_started": 0,
+    "network": "loopback only",
+    "distributed_render_validated": false,
+    "limits": [
+      "Native Windows node/router port required",
+      "No second PC or real multi-worker render tested"
+    ]
+  },
+  "houdini_preferences": {
+    "passed": true,
+    "houdini": "21.0.729",
+    "remote_enabled": true,
+    "render_workers": 2,
+    "fps": 5,
+    "mode": "vectorized",
+    "render_started": false
+  },
+  "kit_bytes": 1268962,
+  "kit_sha256": "c98ccff48cbcbaa62238db65d98c9f1b4e0c09f03ea61015fe04be9aeba87cfd",
+  "native_windows_node_included": false,
+  "distributed_render_validated": false
+}
