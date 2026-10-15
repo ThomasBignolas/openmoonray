@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
-    [ValidateSet('check','prepare','coordinator','listen','probe','assets')][string]$Action,
+    [ValidateSet('check','prepare','coordinator','worker','listen','probe','assets')][string]$Action,
     [Parameter(Mandatory=$true)][string]$Bundle,
     [Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments
 )

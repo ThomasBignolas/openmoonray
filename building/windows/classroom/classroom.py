@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Prepare and diagnose an Arras classroom pool; this is not a render worker."""
+"""Prepare, run and diagnose a portable Windows Arras classroom pool."""
 import argparse
 import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -21,7 +21,7 @@ if not MINICOORD.is_dir():
     MINICOORD = HERE.parents[2] / 'arras/distributed/minicoord/minicoord'
 sys.path.insert(0, str(MINICOORD))
 
-NATIVE_WORKER_FILES = ('bin/arras4_node.exe', 'bin/arras4_noderouter.exe')
+NATIVE_WORKER_FILES = ('arras4_node.exe', 'arras4_router.exe', 'execComp.exe')
 RENDER_FILES = ('bin/execComp.exe', 'bin/computation_progmcrt.dll',
                 'bin/computation_progmcrt_dispatch.dll', 'bin/computation_progmcrt_merge.dll')
 
@@ -67,7 +67,8 @@ def get_json(url, timeout=3):
         data = response.read(1024 * 1024 + 1)
     if len(data) > 1024 * 1024:
         raise ValueError('Unexpectedly large response')
-    return json.loads(data)
+    # Native Arras HTTP responses can include a trailing C-string terminator.
+    return json.loads(data.rstrip(b'\0'))
 
 
 def coordinator_url(value):
@@ -77,10 +78,10 @@ def coordinator_url(value):
 def check(bundle, value, contact=False, assets=None):
     worker = bundle / 'worker'
     missing_render = [p for p in RENDER_FILES if not (worker / p).is_file()]
-    missing_node = [p for p in NATIVE_WORKER_FILES if not (worker / p).is_file()]
+    missing_node = [p for p in NATIVE_WORKER_FILES if not (HERE / 'native/bin' / p).is_file()]
     cpus = os.cpu_count() or 1
     threads = max(1, min(value['worker_threads'], cpus - 1))
-    result = {'kind': 'preparation-readiness', 'distributed_render_validated': False,
+    result = {'kind': 'pool-readiness', 'distributed_render_validated': False,
               'hostname': socket.gethostname(), 'logical_cpus': cpus,
               'proposed_worker_threads': threads, 'reserved_logical_cpus': cpus - threads,
               'missing_render_files': missing_render, 'missing_native_worker_files': missing_node,
@@ -88,7 +89,7 @@ def check(bundle, value, contact=False, assets=None):
     if missing_render:
         result['blockers'].append('Incomplete MoonRay worker bundle')
     if missing_node:
-        result['blockers'].append('Native Windows Arras node/router are not included; their port and validation remain required')
+        result['blockers'].append('Native Arras runtime is missing from this kit; use the native worker package')
     if cpus < 2:
         result['blockers'].append('At least two logical CPUs are needed to leave one free')
     if assets:
@@ -113,7 +114,7 @@ def check(bundle, value, contact=False, assets=None):
     else:
         result['network_checked'] = False
     result['prerequisites_present'] = not result['blockers']
-    result['next_step'] = ('Validate native Windows node/router, then test a small two-PC viewport render. '
+    result['next_step'] = ('Start the coordinator and workers, then test a small two-PC viewport render. '
                            'An HTTP probe does not validate Arras message routing or image merging.')
     return result
 
@@ -132,6 +133,10 @@ def prepare(bundle, value, output):
             # Worker-local paths are inherited from each node's own environment.
             # Sending this client's absolute paths breaks a remote installation.
             computation.pop('environment', None)
+            # Losing any render/dispatch/merge computation invalidates the image.
+            # End the session so the client sees a disconnect instead of waiting
+            # indefinitely for pixels from a failed worker.
+            computation['exitKillsSession'] = True
             requirements = computation.setdefault('requirements', {})
             requirements['packaging_system'] = 'current-environment'
             for key in ('rez_packages', 'rez_context', 'rez_packages_prepend'):
@@ -176,10 +181,10 @@ def prepare(bundle, value, output):
     readiness = check(bundle, value)
     write_json(output / 'readiness.json', readiness)
     (output / 'README.txt').write_text(
-        'Prepared Arras client configuration; distributed rendering is NOT validated.\n'
-        'See readiness.json. The Windows node/router port must be completed first.\n'
+        'Prepared Arras client configuration. Validate the classroom LAN before project use.\n'
+        'See readiness.json and the kit README for worker startup and limitations.\n'
         'These preferences are isolated; your normal Houdini installation is unchanged.\n'
-        'After workers are validated, launch Houdini 21.0.729 with HOUDINI_USER_PREF_DIR\n'
+        'With workers registered, launch Houdini 21.0.729 with HOUDINI_USER_PREF_DIR\n'
         'set to this folder/prefs21.0 and HOUDINI_NO_ENV_FILE=1.\n'
         'The MoonRay viewport defaults to remote rendering with the configured worker count.\n'
         'The settings contain paths to this extraction: regenerate after moving it.\n')
@@ -247,7 +252,7 @@ def listen_probe(bind, port, duration):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['check', 'prepare', 'coordinator', 'listen', 'probe', 'assets'])
+    parser.add_argument('action', choices=['check', 'prepare', 'coordinator', 'worker', 'listen', 'probe', 'assets'])
     parser.add_argument('--bundle', type=Path, required=True)
     parser.add_argument('--config', type=Path, default=HERE / 'classroom.example.json')
     parser.add_argument('--output', type=Path)
@@ -256,9 +261,14 @@ def main():
     parser.add_argument('--file', type=Path, action='append', default=[], help='Explicit asset for manifest creation')
     parser.add_argument('--bind', default='127.0.0.1', help='Local IPv4 interface; default is loopback')
     parser.add_argument('--port', type=int, default=8889, help='Probe listener port')
-    parser.add_argument('--duration', type=int, default=120, help='Probe lifetime or coordinator test lifetime')
+    parser.add_argument('--duration', type=int, help='Lifetime in seconds; worker/coordinator default to running until Ctrl+C')
     parser.add_argument('--url', help='Exact probe URL printed in the guide; no discovery/scanning')
+    parser.add_argument('--http-port', type=int, default=8890, help='Worker control port')
+    parser.add_argument('--router-port', type=int, default=8891, help='Worker message port')
+    parser.add_argument('--state-dir', type=Path, help='New local directory for worker state and logs')
     args = parser.parse_args()
+    if args.duration is None:
+        args.duration = 0 if args.action in ('coordinator', 'worker') else 120
     try:
         value = config(args.config)
         bundle = args.bundle.resolve()
@@ -272,6 +282,10 @@ def main():
                 raise ValueError('--output must name a new directory')
             result = prepare(bundle, value, args.output.resolve())
             code = 0
+        elif args.action == 'worker':
+            from worker import run_worker
+            return run_worker(bundle, value, args.bind, args.http_port, args.router_port,
+                              args.state_dir, args.duration)
         elif args.action in ('coordinator', 'listen'):
             address = ipaddress.IPv4Address(args.bind)
             if address.is_unspecified or address.is_multicast:

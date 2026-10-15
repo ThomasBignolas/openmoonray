@@ -1,5 +1,11 @@
 # Native Windows port (in progress)
 
+The [native classroom Arras kit](classroom/README.md) now includes Windows
+node/router executables, bounded worker launchers and isolated Houdini client
+preferences. Two local native nodes pass scalar/vector image merging, geometry
+updates and small Solaris/husk renders. A second physical PC, the school LAN,
+distributed XPU and distributed production AOVs remain unvalidated.
+
 This directory contains the reproducible build scripts and focused regression
 tests for the Windows x64 port. The native `moonray.exe` and its renderer DLLs
 compile, link and pass startup layout checks. All 645 enabled upstream CPU/default

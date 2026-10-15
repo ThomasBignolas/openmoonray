@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "native_nodes": 2,
+  "network": "loopback only",
+  "native_regressions": 29,
+  "coordinator_checks": 11,
+  "startup_failures": [
+    {
+      "case": "router_port_occupied",
+      "exit_code": 4294967295,
+      "clean_failure": true
+    },
+    {
+      "case": "coordinator_unavailable",
+      "exit_code": 4294967295,
+      "clean_failure": true
+    }
+  ],
+  "render_modes": [
+    "scalar",
+    "vectorized"
+  ],
+  "initial_and_updated_images": 4,
+  "houdini_version": "21.0.729",
+  "houdini_checks": {
+    "primitive_default_geometry_exported": true,
+    "primitive_default_opaque_center": true,
+    "primitive_default_lit_center": true,
+    "primitive_default_finite": true,
+    "primitive_default_fallback_material": true,
+    "polygon_default_geometry_exported": true,
+    "polygon_default_opaque_center": true,
+    "polygon_default_lit_center": true,
+    "polygon_default_finite": true,
+    "polygon_default_fallback_material": true,
+    "primitive_assigned_geometry_exported": true,
+    "primitive_assigned_opaque_center": true,
+    "primitive_assigned_lit_center": true,
+    "primitive_assigned_finite": true
+  },
+  "houdini_test_mesh_resolution": 4,
+  "node_exit_codes": [
+    0,
+    0
+  ],
+  "sessions_remaining": 0,
+  "packaged_launchers_tested": true,
+  "logical_cpus_used": 4,
+  "peak_commit_gb": 5.6,
+  "seconds": 24.03,
+  "kit_bytes": 3728190,
+  "kit_sha256": "c432b0e5af2d527159577d5ca471496be9d1d372a7cb4efed74bf91dac62457b",
+  "native_windows_node_included": true,
+  "distributed_render_validated_on_one_pc": true,
+  "limitations": [
+    "No second physical PC or classroom LAN tested",
+    "Distributed XPU, Cryptomatte and production AOVs unvalidated",
+    "Native deep products require a local single worker",
+    "Minicoord has no authentication, automatic failover or offline-node discovery",
+    "Insufficient per-worker memory can omit geometry; inspect worker logs"
+  ]
+}

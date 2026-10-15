@@ -18,6 +18,8 @@ parser.add_argument("install", type=Path)
 parser.add_argument("--bundle", action="store_true", help="Use the Arras worker bundled with the renderer")
 parser.add_argument("--remote-url", help="Coordinator base URL, without /coordinator/1/sessions")
 parser.add_argument("--session-directory", type=Path, help="Session definitions for the remote worker platform")
+parser.add_argument("--hosts", type=int, default=1, help="Number of remote render computations")
+parser.add_argument("--output", type=Path, help="Isolated render evidence directory")
 parser.add_argument("--timeout", type=int, default=120, help="Seconds allowed for each render and update")
 args = parser.parse_args()
 if args.session_directory and not args.remote_url:
@@ -25,8 +27,9 @@ if args.session_directory and not args.remote_url:
 install = args.install.resolve()
 repo = Path(__file__).resolve().parents[3]
 native = repo / "build/windows/native"
-output = repo / ("build/windows/remote-arras-output" if args.remote_url else
-                 "build/windows/installed-arras-output")
+output = args.output or repo / ("build/windows/remote-arras-output" if args.remote_url else
+                               "build/windows/installed-arras-output")
+output = output.resolve()
 output.mkdir(parents=True, exist_ok=True)
 programs = [("hd_render", install / "bin/hd_render.exe")]
 if not args.remote_url:
@@ -59,7 +62,7 @@ env.update(RATS_ASSETS_DIR=str(repo / "rats/assets"), RATS_HD_RENDERER="Moonray"
            HDMOONRAY_LOCAL_RESERVED_CORES=str(max(0, (os.cpu_count() or 1) - 4)),
            HDMOONRAY_LOGLEVEL="4", DWA_CONFIG_SERVICE="")
 if args.remote_url:
-    env.update(HDMOONRAY_HOSTS="1", HDMOONRAY_STACK="url-" + args.remote_url.rstrip("/"),
+    env.update(HDMOONRAY_HOSTS=str(args.hosts), HDMOONRAY_STACK="url-" + args.remote_url.rstrip("/"),
                HDMOONRAY_MAX_CONNECT_RETRIES="0")
     if args.session_directory:
         session_directory = args.session_directory.resolve(strict=True)

@@ -58,6 +58,19 @@ class Accounting(unittest.TestCase):
         self.assertEqual(node.resources.free.cores, 4)
         self.assertEqual(node.resources.per_session, {})
 
+    def test_duplicate_disconnect_and_failed_computation_release_once(self):
+        co = Coord()
+        node = register(co, '127.0.0.1')
+        definition = single(2)
+        definition['sessionDef']['computations']['a']['exitKillsSession'] = True
+        result = co.create_session_request(definition)
+        session = co.sessions[result['sessionId']]
+        session.computation_exit_signal(session.computations['a'].id, 'worker failed')
+        self.assertEqual(co.sessions, {})
+        self.assertEqual((node.resources.free.cores, node.resources.free.memory), (4, 8192))
+        co.terminate_session_request(session.id, 'duplicate client disconnect')
+        self.assertEqual(node.resources.free.cores, 4)
+
     def test_variable_maximum_is_clamped_to_available(self):
         self.assertEqual(RequiredResources((1, 8), 1024).maxCores(3), 3)
         co = Coord()
@@ -68,6 +81,29 @@ class Accounting(unittest.TestCase):
         self.assertEqual(node.resources.free.cores, 0)
         co.terminate_session_request(session['sessionId'], 'test complete')
         self.assertEqual(node.resources.free.cores, 3)
+
+    def test_failed_launch_and_unregistration_release_resources(self):
+        co = Coord()
+        node = register(co, '127.0.0.1')
+        with patch.object(node, 'launch', side_effect=RuntimeError('offline')):
+            with self.assertRaises(RuntimeError):
+                co.create_session_request(single(2))
+        self.assertEqual(co.sessions, {})
+        self.assertEqual(node.resources.free.cores, 4)
+        co.create_session_request(single(2))
+        co.unregister_node_request(node.id)
+        self.assertEqual(co.sessions, {})
+        self.assertEqual(co.nodes, {})
+        co.unregister_node_request(node.id)
+
+    def test_offline_node_does_not_prevent_release_of_other_nodes(self):
+        co = Coord()
+        a, b = register(co, '127.0.0.1', cores=2), register(co, 'localhost', cores=2)
+        session = co.create_session_request(single(2))
+        with patch.object(a, 'delete_session', side_effect=RuntimeError('offline')):
+            co.terminate_session_request(session['sessionId'], 'test')
+        self.assertEqual(a.resources.free.cores + b.resources.free.cores, 4)
+        self.assertEqual(co.sessions, {})
 
     def test_all_outgoing_worker_requests_have_timeouts(self):
         node = register(Coord(), '127.0.0.1')
@@ -129,7 +165,6 @@ class Preparation(unittest.TestCase):
         result = classroom.check(args.bundle, self.value, assets=manifest)
         self.assertEqual(result['asset_mismatches'], [str(asset)])
         self.assertFalse(result['distributed_render_validated'])
-        self.assertTrue(result['missing_native_worker_files'])
         self.assertFalse(result['prerequisites_present'])
 
     def test_config_rejects_invalid_values_and_reserves_a_cpu(self):
@@ -205,5 +240,6 @@ if __name__ == '__main__':
         'passed': result.wasSuccessful(), 'tests': result.testsRun,
         'render_workers_started': 0, 'network': 'loopback only',
         'distributed_render_validated': False,
-        'limits': ['Native Windows node/router port required', 'No second PC or real multi-worker render tested']})
+        'limits': ['This suite tests accounting and HTTP, not actual rendering',
+                   'See test_native_pool.py for real worker and Houdini validation']})
     sys.exit(0 if result.wasSuccessful() else 1)

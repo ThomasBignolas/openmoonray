@@ -83,7 +83,7 @@ def extended(out, checks, observations):
             checks['grid_xpu_accelerated'] = bool(gpu and float(gpu[1]) > 0) and 'falling back' not in log.lower()
 
 
-def run(out, extra=False):
+def run(out, extra=False, mesh_resolution=None):
     checks, observations = {}, {}
     for name in ('primitive_default', 'polygon_default', 'primitive_assigned'):
         sopcreate = hou.node('/stage').createNode('sopcreate', name)
@@ -97,6 +97,10 @@ def run(out, extra=False):
         sopcreate.stage().Flatten().Export(str(usd))
         stage = Usd.Stage.Open(str(usd))
         geometry = [p for p in stage.Traverse() if p.GetTypeName() in ('Mesh', 'Sphere', 'Points')]
+        if mesh_resolution is not None:
+            for prim in geometry:
+                UsdGeom.PrimvarsAPI(prim).CreatePrimvar('moonray:mesh_resolution',
+                    Sdf.ValueTypeNames.Float, UsdGeom.Tokens.constant).Set(float(mesh_resolution))
         if name.endswith('assigned'):
             material = UsdShade.Material.Define(stage, '/material')
             shader = UsdShade.Shader.Define(stage, '/material/surface')
@@ -162,11 +166,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--extended', action='store_true')
+    parser.add_argument('--mesh-resolution', type=int, help='Explicit subdivision budget for small pool tests')
     args = parser.parse_args()
     args.out = args.out.resolve()
     args.out.mkdir(parents=True, exist_ok=True)
     try:
-        result = run(args.out, args.extended)
+        result = run(args.out, args.extended, args.mesh_resolution)
     except Exception:
         result = dict(passed=False, error=traceback.format_exc())
     (args.out / 'validation.json').write_text(json.dumps(result, indent=2) + '\n')

@@ -1,162 +1,128 @@
-# Arras classroom preparation for Windows
+﻿# Native Arras classroom workers for Windows
 
-This kit prepares several school PCs to contribute to **one Houdini viewport**.
-It is a preparation kit, not a working Windows render farm yet. The Windows
-runtime includes the real MoonRay render, dispatch and merge computations, but
-does **not** yet include a ported `arras4_node.exe` / `arras4_noderouter.exe`.
-The coordinator and diagnostics can run now; a real two-PC render remains the
-next validation milestone after that native worker port.
+This kit runs native Windows Arras nodes, routers and MoonRay computations so
+several workers can contribute to **one Houdini/Solaris image**. The artist PC
+runs Houdini; the other PCs run the worker launcher and need no Houdini license.
+One PC also runs the small upstream Python coordinator, `minicoord`.
 
-```text
-Houdini viewport <---- merged progressive image
-       |                         ^
-       v                         |
- scene dispatch ----> MoonRay workers on PC A and PC B
+Two native worker instances on one Windows PC have rendered real scalar and
+vectorized MoonRay images, merged their results and processed geometry edits.
+This validates local routing and rendering. **A second physical PC and the
+school LAN have not been tested.** This is a preview pool for validation, not a
+production farm scheduler. Distributed XPU, Cryptomatte and deep output need
+their own validation; native deep products currently require a local worker.
 
-minicoord: allocates workers and starts/stops the Arras session
-```
+Everything runs as the logged-in user. No service, admin installation, firewall
+change or scheduled task is made. Keep the ordinary Houdini package and open
+scenes; the client setup below uses separate preferences.
 
-The user has school permission to run programs as a normal user. Everything in
-this kit runs in the foreground from an extracted folder; it installs no service,
-scheduled task, firewall rule or machine-wide environment setting. Keep the normal
-Houdini package and current open scenes as they are.
+## Copy the software and assets
 
-## Files and requirements
+Extract this kit and the full **MoonRay-Houdini-21.0.729-Windows-20261015** portable
+bundle onto each participating PC. Keep the kit's `native` directory intact:
+it contains the updated Arras executables and libraries. The portable bundle
+supplies the MoonRay computations, Python, shaders and runtime dependencies.
+There is no need to run the Houdini installer on worker PCs, install Python,
+download packages or build anything. Use local disk for the software.
 
-Use this kit beside the extracted **MoonRay-Houdini-21.0.729** portable bundle.
-The bundle supplies Python 3.11; this kit supplies pinned coordinator dependencies
-and their licenses, so school PCs need no Python/pip installation or internet.
-Copy binaries to each PC's local disk for startup; project assets can live on an
-authorized shared folder. All workers must read the same textures, geometry,
-volumes and OCIO config at the **same paths**. Arras sends scene updates; it does
-not automatically copy those external files.
+Workers must read textures, geometry, volumes and OCIO configuration at the
+**same paths** as the artist PC, for example an authorized shared project folder.
+Arras transports scene updates, not the contents of external asset files.
+Run workers under accounts that can already read that shared folder.
 
-The kit uses the upstream Python `minicoord`, not DreamWorks' internal Java
-coordinator. Minicoord is intended for small demonstrations and lacks production
-authentication, resilient scheduling and complete node-failure recovery. Run it
-only on the school's authorized, restricted network. It binds to loopback unless
-you explicitly select a local LAN IPv4 address; it refuses `0.0.0.0`.
+Copy `classroom.example.json` to `classroom.json`. Set `coordinator` to the
+coordinator PC's LAN IPv4 address or hostname. Start with two render workers and
+`vectorized` CPU mode. The default is four CPU threads and a 6 GB allocation per
+render computation, plus 1 GB for merge and 256 MB for dispatch. A worker advertises
+capacity for these roles and caps their aggregate memory plus 512 MB overhead.
+The launcher leaves at least one logical CPU unused and stops when less than
+6 GB of system RAM remains free. These limits use native Windows Job Objects.
 
-## Prepare and inspect
+Scene memory is needed on **each** render worker; RAM is not pooled. A low memory
+allocation can cause missing geometry or allocation errors. Check `worker.log`
+and lower subdivision or increase the configured budget if that happens.
+The small Houdini validation explicitly uses mesh resolution 4; a default
+high subdivision level can consume gigabytes even on a simple sphere.
 
-Open PowerShell in this kit folder. Adjust the bundle location:
+## Start the coordinator
+
+Open PowerShell in the kit folder, and set the extracted bundle location:
 
 ```powershell
 $bundle = 'D:\MoonRay-Houdini-21.0.729-Windows-20261015'
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 check -Bundle $bundle
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 coordinator -Bundle $bundle --config .\classroom.json --bind 192.168.1.10
 ```
 
-`check` reports the native node/router files as missing and exits with code 2.
-This is the expected result for the current bundle, not a successful distributed
-render. It also calculates a proposed CPU budget leaving at least one logical
-CPU free. No other PC is contacted without an explicit `--contact` or `probe`.
+Replace the example address with that PC's actual LAN IPv4 address. Defaults
+bind to `127.0.0.1` for local tests; `0.0.0.0` is refused. The coordinator listens
+on port 8888 by default. Leave its window open. Ctrl+C stops it and its pool.
 
-Copy `classroom.example.json` to `classroom.json`. For the later LAN run, replace
-`coordinator` with the chosen coordinator PC's hostname or IPv4 address. Start
-with two render workers and CPU vectorized mode. The default advertised budget
-is four worker threads, with 6 GB requested per render computation, plus 1 GB for
-merge and 256 MB for dispatch where those run. These are allocation requests;
-Windows process-level limits still need implementing in the native worker port.
-Leave memory for Windows, Houdini and other applications on each worker PC.
+Minicoord is an upstream demonstration coordinator with no authentication,
+automatic failover or robust offline-node discovery. Use only the authorized,
+restricted school network. Do not expose these ports to the internet.
+
+## Start a worker on each participating PC
+
+Run from the kit folder on each worker, with that worker's own local LAN address:
 
 ```powershell
+$bundle = 'D:\MoonRay-Houdini-21.0.729-Windows-20261015'
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 worker -Bundle $bundle --config .\classroom.json --bind 192.168.1.11
+```
+
+The launcher prints its state/log folder and `Worker ready` once the native node
+responds. Keep the window open; Ctrl+C stops the node and its children. HTTP
+control uses port **8890**, message routing uses **8891**. Override with
+`--http-port` / `--router-port` if necessary. `--duration 15` makes a short trial.
+`--state-dir D:\mr-run1` selects a new short local folder if the user's temporary
+directory exceeds Windows' Unix-socket path limit. Existing state folders are
+never overwritten.
+
+The coordinator must reach every worker's HTTP port. The artist PC and workers
+must reach workers' routing ports. If Windows or the school network blocks those
+connections, IT needs to allow them; this kit does not bypass restrictions.
+An HTTP connectivity probe alone does not prove message routing works.
+
+## Connect an isolated Houdini session
+
+On the artist PC, check registration and create the client preferences:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 check -Bundle $bundle --config .\classroom.json --contact
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 prepare -Bundle $bundle --config .\classroom.json --output .\prepared-client
+powershell -NoProfile -ExecutionPolicy Bypass -File .\LaunchHoudini.ps1 -Client .\prepared-client -HoudiniDirectory C:\Houdini21
 ```
 
-This creates isolated Houdini preferences, viewport settings and `hd_single` /
-`hd_multi` session definitions. Remote sessions inherit each worker's environment,
-instead of sending absolute paths from the artist PC. The original bundle and
-normal Houdini preferences are not changed. Outputs must be new directories.
-Regenerate the client folder after moving it or the bundle.
+The preferences target **Houdini 21.0.729**, enable **Use Remote Hosts**, set the
+chosen **Remote Hosts** count and connect to the configured coordinator. Use a
+new output directory when regenerating preferences after moving the software.
+Start with a small scene and compare it to local rendering, then test camera,
+light and material edits. Stop rendering before shutting down the worker pool.
 
-Do not switch a working viewport over yet: `prepared-client/readiness.json`
-lists the remaining prerequisites. After native workers pass their own tests,
-the prepared preferences will connect to `HDMOONRAY_STACK=url-http://HOST:8888`,
-with **Use Remote Hosts** enabled and the chosen **Remote Hosts** count. Starting
-Houdini with `HOUDINI_USER_PREF_DIR` pointing to `prepared-client/prefs21.0` and
-`HOUDINI_NO_ENV_FILE=1` keeps this trial separate from normal sessions.
+If a computation exits, this kit ends its session so Houdini sees a disconnect
+instead of waiting forever. Restart MoonRay after fixing the cause. A powered-off
+PC may need the coordinator restarted to clear stale registration; automatic
+worker recovery is not provided.
 
-## Coordinator trial on this PC
+## Diagnostics and rebuilding
+
+`Classroom.ps1 listen` and `probe` provide an explicit HTTP connectivity probe;
+see `classroom.py --help`. `assets --file PATH --output assets.json` records hashes
+of explicitly named assets; `check --assets assets.json` verifies them. There is
+no network scan or automatic USD dependency collection.
+
+`test_classroom.py` tests coordinator accounting, failure cleanup, session
+templates and real HTTP endpoints. `test_native_pool.py` exercises actual native
+workers, image merging, interactive geometry updates and optional Houdini/husk
+renders. Run native tests through `building/windows/houdini/run_bounded.py`.
+The Arras build also supplies networking, process and local-session regressions.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 coordinator -Bundle $bundle --config .\classroom.json --duration 0
+& building/windows/Build-ArrasNode.ps1 -Jobs 4
+python building/windows/classroom/package_classroom.py --wheels build/windows/classroom-wheels --native-bin build/windows/arras-node/bin --bundle PATH_TO_PORTABLE_BUNDLE --output build/windows/Arras-Classroom-Native
 ```
 
-Stop with Ctrl+C. For a later authorized LAN trial add `--bind YOUR_LOCAL_IPV4`.
-The chosen interface must belong to this PC; `coordinator` in the JSON must name
-that same machine for clients. In a second PowerShell window:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 check -Bundle $bundle --config .\classroom.json --contact --output .\readiness.json
-```
-
-With no native workers, the coordinator correctly reports zero nodes. The kit
-does not register fake workers or represent an HTTP response as a render result.
-
-## Two-PC network check, when a second PC is available
-
-On PC A, use its actual LAN address (example below must be replaced):
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 listen -Bundle $bundle --bind 192.168.1.10 --port 8889 --duration 120
-```
-
-On PC B:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 probe -Bundle $bundle --url http://192.168.1.10:8889/moonray-network-probe
-```
-
-Then swap A and B to check both directions. The listener automatically stops
-after two minutes, exposes only a fixed diagnostic response, and never executes
-commands or serves files. It is not an Arras worker. No network range is scanned.
-If it fails, report the exact addresses and port to school IT; do not disable the
-firewall. A successful probe proves only that port and direction are reachable.
-Arras also needs worker HTTP and router TCP connections between nodes and the
-client. Upstream Node chooses dynamic ports; bounded/configurable Windows node
-ports and a real bidirectional routing test remain part of the native port work.
-No administrator access is needed to run these tools, but network policy may
-require an IT-managed exception before actual distributed rendering can work.
-
-## Check shared assets
-
-Create a manifest of explicitly selected project dependencies, then run `check`
-with it on each PC. For example:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 assets -Bundle $bundle --file '\\school-share\project\textures\wall.tx' --file '\\school-share\project\config.ocio' --output .\assets.json
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Classroom.ps1 check -Bundle $bundle --assets .\assets.json
-```
-
-Hashes catch files that exist under the same name but have different contents.
-This checks only explicitly listed files, not automatic USD dependency discovery.
-
-## Validation and remaining native work
-
-`test_classroom.py` exercises real coordinator/probe HTTP on loopback, failed
-allocation accounting, successful allocation/release with simulated nodes,
-remote template topology, asset differences and request timeouts. The simulated
-nodes never run a computation; these tests do not prove multi-PC rendering.
-
-Next native work is to port upstream Node/router process startup and socket
-inheritance to Windows, replace its POSIX signal/resource handling, enforce CPU
-and memory budgets with Windows Job Objects, expose predictable network ports,
-and validate worker exit/recovery and cleanup. Then run a small real two-PC
-viewport render, change camera/light/materials, compare against local rendering,
-and measure time to first pixel and update latency. Test XPU after CPU routing
-works; distributed Cryptomatte/deep output remain separately unvalidated.
-
-The coordinator changes in this snapshot prevent failed tentative allocations
-from consuming live resources, clamp variable core requests to free capacity,
-discard allocation-rejected sessions, and add deadlines to outgoing worker HTTP.
-They do not make the upstream demonstration coordinator production-grade.
-
-To rebuild this kit from the repository, use a Python 3.11 environment with pip:
-
-```powershell
-python -m pip download --only-binary=:all: --require-hashes -r building/windows/classroom/requirements-lock.txt --dest build/windows/classroom-wheels
-python building/windows/classroom/package_classroom.py --wheels build/windows/classroom-wheels --output build/windows/classroom-kit
-```
-
-See [upstream distributed Arras documentation](https://docs.openmoonray.org/developer-reference/arras/distributed-arras/)
-for the coordinator/node architecture and shared filesystem requirements.
+Packaging uses hash-pinned offline Python wheels, preserves dependency license
+notices and verifies ZIP file hashes. See the
+[upstream Arras documentation](https://docs.openmoonray.org/developer-reference/arras/distributed-arras/)
+for the coordinator/node architecture.
