@@ -1,0 +1,6 @@
+{
+  "scope": "all",
+  "full_suite_shards": 16,
+  "threads_per_render": 4,
+  "canonical_candidates": 25
+}

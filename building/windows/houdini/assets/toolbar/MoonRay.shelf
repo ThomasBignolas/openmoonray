@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shelfDocument>
+  <toolshelf name="moonray" label="MoonRay">
+    <memberTool name="moonray_setup"/>
+    <memberTool name="moonray_ipr"/>
+    <memberTool name="moonray_pause"/>
+    <memberTool name="moonray_restart"/>
+    <memberTool name="moonray_stop"/>
+    <memberTool name="moonray_preview"/>
+    <memberTool name="moonray_render"/>
+    <memberTool name="moonray_settings"/>
+    <memberTool name="moonray_color"/>
+    <memberTool name="moonray_aovs"/>
+    <memberTool name="moonray_deep"/>
+    <memberTool name="moonray_surface"/>
+    <memberTool name="moonray_glass"/>
+    <memberTool name="moonray_skin"/>
+    <memberTool name="moonray_volume"/>
+    <memberTool name="moonray_assign"/>
+    <memberTool name="moonray_rect"/>
+    <memberTool name="moonray_disk"/>
+    <memberTool name="moonray_dome"/>
+    <memberTool name="moonray_distant"/>
+    <memberTool name="moonray_help"/>
+  </toolshelf>
+  <tool name="moonray_setup" label="Render Setup" icon="ROP_usdrender"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('setup')]]></script></tool>
+  <tool name="moonray_ipr" label="Start IPR" icon="BUTTONS_play"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('ipr')]]></script></tool>
+  <tool name="moonray_pause" label="Pause IPR" icon="BUTTONS_pause"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('pause')]]></script></tool>
+  <tool name="moonray_restart" label="Restart IPR" icon="BUTTONS_reload"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('restart')]]></script></tool>
+  <tool name="moonray_stop" label="Stop IPR" icon="BUTTONS_stop"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('stop')]]></script></tool>
+  <tool name="moonray_preview" label="Render to MPlay" icon="ROP_ifd"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('render', True)]]></script></tool>
+  <tool name="moonray_render" label="Render to Disk" icon="ROP_usdrender"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('render')]]></script></tool>
+  <tool name="moonray_settings" label="Settings" icon="LOP_rendersettings"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('settings')]]></script></tool>
+  <tool name="moonray_color" label="Color Management" icon="COP2_colorcorrect"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('color')]]></script></tool>
+  <tool name="moonray_aovs" label="AOVs" icon="LOP_rendervar"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('aovs')]]></script></tool>
+  <tool name="moonray_deep" label="Deep Output" icon="LOP_renderproduct"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('deep')]]></script></tool>
+  <tool name="moonray_surface" label="Surface" icon="VOP_material"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('material', 'DwaBaseMaterial')]]></script></tool>
+  <tool name="moonray_glass" label="Glass" icon="VOP_material"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('material', 'DwaRefractiveMaterial')]]></script></tool>
+  <tool name="moonray_skin" label="Skin" icon="VOP_material"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('material', 'DwaSkinMaterial')]]></script></tool>
+  <tool name="moonray_volume" label="Volume" icon="VOP_material"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('material', 'BaseVolume')]]></script></tool>
+  <tool name="moonray_assign" label="Assign Material" icon="LOP_assignmaterial"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('assign')]]></script></tool>
+  <tool name="moonray_rect" label="Area Light" icon="LOP_light"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('light', 'rect')]]></script></tool>
+  <tool name="moonray_disk" label="Disk Light" icon="LOP_light"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('light', 'disk')]]></script></tool>
+  <tool name="moonray_dome" label="Dome Light" icon="LOP_light"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('light', 'dome')]]></script></tool>
+  <tool name="moonray_distant" label="Distant Light" icon="LOP_light"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('light', 'distant')]]></script></tool>
+  <tool name="moonray_help" label="Help" icon="BUTTONS_help"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('help')]]></script></tool>
+  <tool name="vop_moonray_materialbuilder" label="MoonRay Material Builder" icon="VOP_material">
+    <toolMenuContext name="network"><contextOpType>Vop/materialbuilder</contextOpType></toolMenuContext>
+    <toolSubmenu>MoonRay</toolSubmenu>
+    <script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.material_builder_tool(kwargs)]]></script>
+  </tool>
+</shelfDocument>

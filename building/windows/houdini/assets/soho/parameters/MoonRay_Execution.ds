@@ -1,0 +1,95 @@
+    group {
+        name "moonray_execution"
+        label "Execution"
+        parm {
+            name "xn__moonrayexecutionMode_control_pmb"
+            label "moonray:executionMode"
+            type string
+            default { "none" }
+            menujoin {
+                "set" "Set or Create"
+                "setexisting" "Set if Exists"
+                "block" "Block"
+                "none" "Do Nothing"
+            }
+        }
+        parm {
+            name "xn__moonrayexecutionMode_o8a"
+            label "Execution Mode"
+            type string
+            default { "auto" }
+            menu {
+                "auto" "Auto (CPU)"
+                "xpu" "XPU (CPU + NVIDIA GPU)"
+                "vectorized" "CPU Vectorized"
+                "scalar" "CPU Scalar"
+            }
+            help "XPU accelerates ray intersections on an NVIDIA GPU. Unsupported scene features fall back to CPU to preserve the image; reflected/refracted Cryptomatte requires scalar CPU rendering. Auto keeps the upstream CPU selection. This scene setting also applies to live rendering and overrides the viewport preference."
+            disablewhen "{ xn__moonrayexecutionMode_control_pmb == block } { xn__moonrayexecutionMode_control_pmb == none }"
+            parmtag { "usdvaluetype" "string" }
+        }
+        parm {
+            name "xn__moonraylocalThreads_control_2kb"
+            label "moonray:localThreads"
+            type string
+            default { "none" }
+            menujoin {
+                "set" "Set or Create"
+                "setexisting" "Set if Exists"
+                "block" "Block"
+                "none" "Do Nothing"
+            }
+        }
+        parm {
+            name "xn__moonraylocalThreads_16a"
+            label "Local CPU Threads"
+            type integer
+            default { 4 }
+            range { 0! 64 }
+            help "Limits CPU threads in the local MoonRay worker for viewport and disk rendering, including CPU shading in XPU. Zero selects the available cores minus reserved cores. Changing this value restarts the worker. Use a smaller value to keep other applications responsive."
+            disablewhen "{ xn__moonraylocalThreads_control_2kb == block } { xn__moonraylocalThreads_control_2kb == none }"
+            parmtag { "usdvaluetype" "int" }
+        }
+        parm {
+            name "xn__moonrayforcePolygon_control_2kb"
+            label "moonray:forcePolygon"
+            type string
+            default { "none" }
+            menujoin {
+                "set" "Set or Create"
+                "setexisting" "Set if Exists"
+                "block" "Block"
+                "none" "Do Nothing"
+            }
+        }
+        parm {
+            name "xn__moonrayforcePolygon_16a"
+            label "Polygon Preview"
+            type toggle
+            default { "0" }
+            help "Render mesh control cages without subdivision, in both live and disk rendering. This changes surface shape and is intended for preview only; turn it off for final rendering. An authored value overrides the viewport Force Polygon preference."
+            disablewhen "{ xn__moonrayforcePolygon_control_2kb == block } { xn__moonrayforcePolygon_control_2kb == none }"
+            parmtag { "usdvaluetype" "bool" }
+        }
+        parm {
+            name "xn__moonrayinfo_control_16a"
+            label "moonray:info"
+            type string
+            default { "none" }
+            menujoin {
+                "set" "Set or Create"
+                "setexisting" "Set if Exists"
+                "block" "Block"
+                "none" "Do Nothing"
+            }
+        }
+        parm {
+            name "xn__moonrayinfo_0ta"
+            label "Detailed Render Statistics"
+            type toggle
+            default { "0" }
+            help "Log MoonRay's geometry, tessellation and render preparation statistics for performance diagnosis. Applies to both live and disk rendering."
+            disablewhen "{ xn__moonrayinfo_control_16a == block } { xn__moonrayinfo_control_16a == none }"
+            parmtag { "usdvaluetype" "bool" }
+        }
+    }

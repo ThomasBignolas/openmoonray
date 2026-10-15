@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mainMenu><menuBar>
+<subMenu id="moonray_menu"><label>MoonRay</label><insertBefore>help_menu</insertBefore>
+<scriptItem id="moonray_setup"><label>Create Render Setup</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('setup')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_ipr"><label>Start / Resume Live Render</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('ipr')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_pause"><label>Pause Live Render</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('pause')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_restart"><label>Restart Live Render</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('restart')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_stop"><label>Stop Live Render</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('stop')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_preview"><label>Render to MPlay</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('render', True)]]></scriptCode></scriptItem>
+<scriptItem id="moonray_render"><label>Render to Disk</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('render')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_settings"><label>Render Settings</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('settings')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_color"><label>Create Color Management</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('color')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_aovs"><label>Create AOVs</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('aovs')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_deep"><label>Create Deep Output</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('deep')]]></scriptCode></scriptItem>
+<separatorItem/>
+<scriptItem id="moonray_surface"><label>Surface Material</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('material', 'DwaBaseMaterial')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_glass"><label>Glass Material</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('material', 'DwaRefractiveMaterial')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_skin"><label>Skin Material</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('material', 'DwaSkinMaterial')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_volume"><label>Volume Material</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('material', 'BaseVolume')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_assign"><label>Assign Material</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('assign')]]></scriptCode></scriptItem>
+<separatorItem/>
+<scriptItem id="moonray_rect"><label>Area Light</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('light', 'rect')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_disk"><label>Disk Light</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('light', 'disk')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_dome"><label>Dome Light</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('light', 'dome')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_distant"><label>Distant Light</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('light', 'distant')]]></scriptCode></scriptItem>
+<separatorItem/>
+<scriptItem id="moonray_help"><label>Quick Start</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('help')]]></scriptCode></scriptItem>
+</subMenu></menuBar></mainMenu>

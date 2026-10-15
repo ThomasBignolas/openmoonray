@@ -25,6 +25,12 @@ To clone this repository along with the submodules:
 
 You can get started building MoonRay on Linux or MacOS, or a container by reading the [Building MoonRay](https://docs.openmoonray.org/getting-started/installation/building-moonray/) documentatation website.
 
+For the native Windows x64 CPU port, including hdMoonray and local Arras rendering,
+see the [Windows build, test, and runtime packaging guide](building/windows/README.md).
+
+For the installed Houdini 21.0.729 integration and editable Solaris demo,
+see the [Houdini quick start](building/windows/houdini/README.md).
+
 
 
 ### Developer Quick Start

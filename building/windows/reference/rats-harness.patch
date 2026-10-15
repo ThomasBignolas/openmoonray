@@ -1,0 +1,323 @@
+diff --git a/cmake/RatsTest.cmake b/cmake/RatsTest.cmake
+index 6e097ae739a55ea8e684c99cbfd40351b7f96706..6313a65201e7498a0ac13db1b298d8876fbb33d5 100644
+--- a/cmake/RatsTest.cmake
++++ b/cmake/RatsTest.cmake
+@@ -152,9 +152,8 @@ function(add_rats_test)
+ 
+     # construct list of env vars to be made available at test runtime
+     set(assets_dir "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../assets")
+-    cmake_path(NATIVE_PATH assets_dir NORMALIZE assets_dir)
++    cmake_path(NORMAL_PATH assets_dir)
+     list(APPEND runtime_env_vars "RATS_ASSETS_DIR=${assets_dir}")
+-    list(APPEND runtime_env_vars "PYTHONPATH=$ENV{PYTHONPATH}:$ENV{OIIO_PYTHON}")
+     list(APPEND runtime_env_vars "${ARG_ENVIRONMENT}")
+ 
+     # add CTests
+@@ -241,9 +240,19 @@ function(add_rats_test)
+             list(APPEND canonicals_args "--canonicals" "${canonical}")
+         endforeach()
+         
+-        # Build render command as a single space-separated string
+-        list(JOIN render_cmd " " render_cmd_string)
+-        set(render_cmd_args "--render-cmd" "${render_cmd_string}")
++        # Preserve argument boundaries, spaces and Windows backslashes without
++        # passing a shell command through a POSIX parser.
++        set(render_cmd_json "[]")
++        set(arg_index 0)
++        foreach(arg IN LISTS render_cmd)
++            string(REPLACE "\\" "\\\\" json_arg "${arg}")
++            string(REPLACE "\"" "\\\"" json_arg "${json_arg}")
++            string(JSON render_cmd_json SET "${render_cmd_json}" ${arg_index} "\"${json_arg}\"")
++            math(EXPR arg_index "${arg_index} + 1")
++        endforeach()
++        set(render_cmd_file "${render_dir}/render-command.json")
++        file(WRITE "${render_cmd_file}" "${render_cmd_json}\n")
++        set(render_cmd_args "--render-command-file" "${render_cmd_file}")
+         
+         check_test_name(${update_test_name})
+         add_test(NAME ${update_test_name}
+@@ -276,6 +285,10 @@ function(add_rats_test)
+             DISABLED ${exec_mode_disabled}
+             ENVIRONMENT "${runtime_env_vars}"
+         )
++        if(NOT "$ENV{OIIO_PYTHON}" STREQUAL "")
++            set_tests_properties(${update_test_name} ${render_test_name} PROPERTIES
++                ENVIRONMENT_MODIFICATION "PYTHONPATH=path_list_append:$ENV{OIIO_PYTHON}")
++        endif()
+ 
+         # Add CTest to diff against the canonical images
+         if(NOT ARG_NO_IMAGE_DIFF)
+diff --git a/cmake/diff.cmake b/cmake/diff.cmake
+index 3b316715f1580b9c5e2fe8855781ffe918ac6cd7..d4942a90341c31968a1476de5fe7b139458cca49 100644
+--- a/cmake/diff.cmake
++++ b/cmake/diff.cmake
+@@ -24,32 +24,33 @@ endforeach()
+ if(NOT DEFINED ENV{RATS_CANONICAL_DIR})
+     message(FATAL_ERROR "[RATS] RATS_CANONICAL_DIR is undefined")
+ endif()
+-file(TO_NATIVE_PATH "$ENV{RATS_CANONICAL_DIR}" canonicals_root)
+-cmake_path(NORMAL_PATH canonicals_root)
+-if(NOT EXISTS ${canonicals_root})
++# TO_NATIVE_PATH may shell-escape spaces on Unix; these paths are filesystem
++# values and execute_process arguments, not shell command text.
++cmake_path(CONVERT "$ENV{RATS_CANONICAL_DIR}" TO_CMAKE_PATH_LIST canonicals_root NORMALIZE)
++if(NOT EXISTS "${canonicals_root}")
+     message(FATAL_ERROR "[RATS] RATS_CANONICAL_DIR ${canonicals_root} does not exist")
+ endif()
+ 
+ # Establish fully qualified path to the canonicals for this test
+-file(TO_NATIVE_PATH "${canonicals_root}/${TEST_REL_PATH}/${EXEC_MODE}/" test_canonical_path)
++set(test_canonical_path "${canonicals_root}/${TEST_REL_PATH}/${EXEC_MODE}/")
+ cmake_path(NORMAL_PATH test_canonical_path)
+-file(TO_NATIVE_PATH "${test_canonical_path}/${IMAGE_FILENAME}" canonical_image)
++set(canonical_image "${test_canonical_path}/${IMAGE_FILENAME}")
+ cmake_path(NORMAL_PATH canonical_image)
+-if(NOT EXISTS ${canonical_image})
++if(NOT EXISTS "${canonical_image}")
+     message(FATAL_ERROR "[RATS] canonical not found: ${canonical_image}")
+ endif()
+ 
+-if(NOT EXISTS ${IMAGE_FILENAME})
++if(NOT EXISTS "${IMAGE_FILENAME}")
+     message(FATAL_ERROR "[RATS] test image not found: ${IMAGE_FILENAME}")
+ endif()
+ 
+ set(diff_args "-a;-v;-abs") # we always want to include these flags in our idiff args
+ 
+ # Attempt to read diff args from the diff.json, which is assumed to be stored along with the canonicals.
+-file(TO_NATIVE_PATH "${canonicals_root}/${TEST_REL_PATH}/diff.json" diff_json_file)
++set(diff_json_file "${canonicals_root}/${TEST_REL_PATH}/diff.json")
+ cmake_path(NORMAL_PATH diff_json_file)
+ if(EXISTS "${diff_json_file}")
+-    file(READ ${diff_json_file} all_json)
++    file(READ "${diff_json_file}" all_json)
+ 
+     # Find the JSON object associated with this image/exec_mode
+     string(JSON json_object GET "${all_json}" "${IMAGE_FILENAME}" "${EXEC_MODE}")
+@@ -75,7 +76,7 @@ if(EXISTS "${diff_json_file}")
+ endif()
+ 
+ execute_process(
+-    COMMAND ${IDIFF_TOOL} ${diff_args} -o ${DIFF_IMAGE_FILENAME} ${canonical_image} ${IMAGE_FILENAME}
++    COMMAND "${IDIFF_TOOL}" ${diff_args} -o "${DIFF_IMAGE_FILENAME}" "${canonical_image}" "${IMAGE_FILENAME}"
+     COMMAND_ECHO STDOUT
+     RESULT_VARIABLE idiff_return_code
+ )
+@@ -87,9 +88,9 @@ if(idiff_return_code)
+     message("[RATS] ${idiff_args}")
+ 
+     # report images
+-    file(TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/${IMAGE_FILENAME}" test_image_full)
++    set(test_image_full "${CMAKE_BINARY_DIR}/${IMAGE_FILENAME}")
+     cmake_path(NORMAL_PATH test_image_full)
+-    file(TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/${DIFF_IMAGE_FILENAME}" diff_image_full)
++    set(diff_image_full "${CMAKE_BINARY_DIR}/${DIFF_IMAGE_FILENAME}")
+     cmake_path(NORMAL_PATH diff_image_full)
+     message("[RATS]  canonical | ${canonical_image}")
+     message("[RATS] test image | ${test_image_full}")
+@@ -98,7 +99,7 @@ if(idiff_return_code)
+ endif()
+ 
+ # idiff returns 0 on pass, 1 on warning and >=2 on error
+-if(idiff_return_code GREATER 1)
++if(NOT "${idiff_return_code}" MATCHES "^[01]$")
+     message(FATAL_ERROR "[RATS] idiff exit code: ${idiff_return_code}")
+ endif()
+ 
+diff --git a/cmake/diff_headers.cmake b/cmake/diff_headers.cmake
+index 538ab2a0731223ef06fffba0b389ef86f7e8256f..5386861be024af7224080480fe091287fc529c58 100644
+--- a/cmake/diff_headers.cmake
++++ b/cmake/diff_headers.cmake
+@@ -28,7 +28,7 @@ endif()
+ # Run 'oiiotool' and try to retrieve resumeHistory metadata from header
+ function(get_resume_history file output_var)
+     execute_process(
+-        COMMAND ${OIIO_TOOL} -n --info -v --metamatch "resumeHistory" -i ${file}
++        COMMAND "${OIIO_TOOL}" -n --info -v --metamatch "resumeHistory" -i "${file}"
+         RESULT_VARIABLE result
+         OUTPUT_VARIABLE out
+     )
+@@ -69,7 +69,7 @@ endfunction()
+ # Run 'oiiotool' and filter out filename, resumeHistory and DateTime metadata from header
+ function(get_header file output_var)
+     execute_process(
+-        COMMAND ${OIIO_TOOL} -n --info -v --no-metamatch "resumeHistory|DateTime" -i ${file}
++        COMMAND "${OIIO_TOOL}" -n --info -v --no-metamatch "resumeHistory|DateTime" -i "${file}"
+         RESULT_VARIABLE result
+         OUTPUT_VARIABLE out
+         ECHO_ERROR_VARIABLE
+@@ -86,19 +86,19 @@ endfunction()
+ 
+ #------------------------------------
+ 
+-file(TO_NATIVE_PATH "$ENV{RATS_CANONICAL_DIR}/${CANONICAL}" full_canonical_path)
++cmake_path(CONVERT "$ENV{RATS_CANONICAL_DIR}/${CANONICAL}" TO_CMAKE_PATH_LIST full_canonical_path NORMALIZE)
+ 
+ # Execute the header/metatdata comparison
+-if(NOT EXISTS ${full_canonical_path})
++if(NOT EXISTS "${full_canonical_path}")
+     message(FATAL_ERROR "canonical not found: ${full_canonical_path}")
+ endif()
+-if(NOT EXISTS ${RESULT})
++if(NOT EXISTS "${RESULT}")
+     message(FATAL_ERROR "result not found: ${RESULT}")
+ endif()
+ 
+ # first, compare the resumeHistory metadata if it exists
+-get_resume_history(${full_canonical_path} canonical_history)
+-get_resume_history(${RESULT} result_history)
++get_resume_history("${full_canonical_path}" canonical_history)
++get_resume_history("${RESULT}" result_history)
+ 
+ if(DEFINED canonical_history OR DEFINED result_history)
+     string(JSON same EQUAL ${canonical_history} ${result_history})
+@@ -116,8 +116,8 @@ if(DEFINED canonical_history OR DEFINED result_history)
+ endif()
+ 
+ # next, compare the remaining header information
+-get_header(${full_canonical_path} canonical_header)
+-get_header(${RESULT} result_header)
++get_header("${full_canonical_path}" canonical_header)
++get_header("${RESULT}" result_header)
+ 
+ if(NOT ${canonical_header} STREQUAL ${result_header})
+     cmake_path(GET RESULT STEM stem)
+diff --git a/cmake/render.py b/cmake/render.py
+index 7d15b66582590bc3f3df14dbd329ed4604dcd418..ddc99f64700c9f5741053e09892466cd67320b4d 100755
+--- a/cmake/render.py
++++ b/cmake/render.py
+@@ -48,6 +48,12 @@ def main():
+             except ValueError:
+                 print(f"[RATS WARNING] RATS_MOONRAY_THREADS={moonray_threads} is not a valid integer, ignoring", file=sys.stderr)
+     
++    # Allow the same USD scene to exercise an explicitly selected Hydra backend.
++    if parsed_args.renderer == 'hd_render':
++        renderer_plugin = os.getenv('RATS_HD_RENDERER', '')
++        if renderer_plugin:
++            cmd.extend(['-renderer', renderer_plugin])
++
+     # Add remaining arguments
+     cmd.extend(parsed_args.args)
+     
+@@ -56,6 +62,8 @@ def main():
+         result = subprocess.run(cmd, check=True)
+         return result.returncode
+     except subprocess.CalledProcessError as e:
++        print(f"Renderer failed with exit code {e.returncode} (0x{e.returncode & 0xffffffff:08x})",
++              file=sys.stderr)
+         return e.returncode
+     except Exception as e:
+         print(f"Error executing renderer: {e}", file=sys.stderr)
+diff --git a/cmake/update_canonicals.py b/cmake/update_canonicals.py
+index 0ff191a2026d93d35c006129d849f7682c950a4a..d5ea8c9f775227b6ac0f3d68f2d83d25f544508f 100755
+--- a/cmake/update_canonicals.py
++++ b/cmake/update_canonicals.py
+@@ -40,12 +40,19 @@ class CanonicalUpdater:
+         """Initialize the updater with parsed command-line arguments."""
+         self.test_rel_path = args.test_rel_path
+         self.canonicals = args.canonicals
+-        # Parse the space-separated render command string into a list
+-        import shlex
+-        self.render_cmd = shlex.split(args.render_cmd)
+-        # Map 'default' to 'auto' for moonray compatibility
+-        self.exec_mode = 'auto' if args.exec_mode == 'default' else args.exec_mode
+-        self.exec_mode_arg = args.exec_mode  # Keep original for directory naming
++        if args.render_command_file:
++            with open(args.render_command_file, encoding='utf-8') as command_file:
++                self.render_cmd = json.load(command_file)
++            if not isinstance(self.render_cmd, list) or not self.render_cmd or not all(
++                    isinstance(arg, str) for arg in self.render_cmd):
++                raise ValueError('Render command must be a nonempty JSON array of strings')
++        else:
++            # Retain the original CLI for existing callers.
++            import shlex
++            self.render_cmd = shlex.split(args.render_cmd)
++        # This is the CTest reference key; the render command already selects
++        # the renderer's execution mode. Hydra references use 'default'.
++        self.exec_mode = args.exec_mode
+         self.idiff = args.idiff
+         self.diff_json = args.diff_json
+         self.num_renders = args.num_renders
+@@ -73,9 +80,10 @@ class CanonicalUpdater:
+         if env_concurrent:
+             print(f"[RATS DEBUG] RATS_RUN_CONCURRENT={env_concurrent}, run_concurrent={self.run_concurrent}, max_workers={self.max_workers}", flush=True)
+         
+-        # Check for RATS_MOONRAY_THREADS environment variable and inject -threads argument
++        # Direct MoonRay commands need the thread option. The render.py wrapper
++        # handles it itself, and other renderers do not accept this option.
+         moonray_threads = os.getenv('RATS_MOONRAY_THREADS', '')
+-        if moonray_threads:
++        if moonray_threads and Path(self.render_cmd[0]).name.lower() in ('moonray', 'moonray.exe'):
+             try:
+                 num_threads = int(moonray_threads)
+                 if num_threads > 0:
+@@ -332,25 +340,26 @@ class CanonicalUpdater:
+                     candidate_stats['comparisons'][j] = comparison
+                     oiio_stats = comparison['oiio_stats']
+                     
+-                    # Update candidate aggregates (only for j > i to avoid double counting)
+-                    if j > i:
+-                        candidate_stats['total_rms_error'] += comparison['rms_error']
+-                        candidate_stats['mean_error_sum'] += comparison['mean_error']
+-                        candidate_stats['largest_max_error'] = max(
+-                            candidate_stats['largest_max_error'], comparison['max_error']
++                    # Each candidate needs its error against every other
++                    # candidate, including pairs cached with reversed indices.
++                    candidate_stats['total_rms_error'] += comparison['rms_error']
++                    candidate_stats['mean_error_sum'] += comparison['mean_error']
++                    candidate_stats['largest_max_error'] = max(
++                        candidate_stats['largest_max_error'], comparison['max_error']
++                    )
++
++                    # Find largest avg and stddev across all channels
++                    for avg_val in oiio_stats['avg']:
++                        candidate_stats['largest_avg'] = max(
++                            candidate_stats['largest_avg'], avg_val
++                        )
++                    for stddev_val in oiio_stats['stddev']:
++                        candidate_stats['largest_stddev'] = max(
++                            candidate_stats['largest_stddev'], stddev_val
+                         )
+-                        
+-                        # Find largest avg and stddev across all channels
+-                        for avg_val in oiio_stats['avg']:
+-                            candidate_stats['largest_avg'] = max(
+-                                candidate_stats['largest_avg'], avg_val
+-                            )
+-                        for stddev_val in oiio_stats['stddev']:
+-                            candidate_stats['largest_stddev'] = max(
+-                                candidate_stats['largest_stddev'], stddev_val
+-                            )
+-                        
+-                        # Update image-level aggregates
++
++                    # Each unordered pair contributes once to image statistics.
++                    if j > i:
+                         image_stats['largest_mean_error'] = max(
+                             image_stats['largest_mean_error'], comparison['mean_error']
+                         )
+@@ -561,17 +570,21 @@ def main():
+         help='Output image to be stored as canonical (can be specified multiple times)'
+     )
+     
+-    parser.add_argument(
++    render_command = parser.add_mutually_exclusive_group(required=True)
++    render_command.add_argument(
+         '--render-cmd',
+-        required=True,
+         help='Render command as a space-separated string'
+     )
++    render_command.add_argument(
++        '--render-command-file',
++        help='UTF-8 JSON file containing the renderer argument array'
++    )
+     
+     parser.add_argument(
+         '--exec-mode',
+         required=True,
+         choices=['scalar', 'vector', 'xpu', 'auto', 'default'],
+-        help='Execution mode (default/auto will use moonray auto mode)'
++        help='CTest execution mode used for the canonical directory and diff.json key'
+     )
+     
+     parser.add_argument(
