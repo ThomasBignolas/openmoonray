@@ -60,7 +60,7 @@ def _context(kwargs=None):
 
 def _append(network, source, kind, name):
     display_tail = None
-    if kind in ('materiallibrary','light','domelight','assignmaterial','camera','moonray::aovs::1.0','moonray::deep::1.0'):
+    if kind in ('materiallibrary','light','domelight','assignmaterial','camera','moonray::aovs::1.0','moonray::deep::1.0','moonray::geometry::1.0'):
         current = source
         while current:
             if current.type().name() == 'moonray::color::1.0':
@@ -149,6 +149,7 @@ def create_render_setup(kwargs=None):
         _set(product, 'orderedVars', ' '.join(paths))
         _set(product, 'productName', '$HIP/render/moonray.$F4.exr')
         aovs = _append(network, product, 'moonray::aovs::1.0', 'moonray_aovs')
+        aovs.parm('products').set('/Render/MoonRay/beauty')
         settings = _append(network, aovs, 'rendersettings', 'moonray_settings')
         settings.parm('primpath').set('/Render/MoonRay/settings')
         _set(settings, 'camera', cameras[0])
@@ -395,8 +396,9 @@ def run(action, *args, **kwargs):
     from moonray_aovs import create as create_aovs
     from moonray_deep import create as create_deep
     from moonray_color import create as create_color
+    from moonray_geometry import create as create_geometry
     actions = {'setup': create_render_setup, 'aovs': create_aovs, 'deep': create_deep, 'color': create_color, 'material': create_material,
-               'light': create_light, 'assign': assign_material, 'render': render,
+               'light': create_light, 'assign': assign_material, 'render': render, 'geometry': create_geometry,
                'ipr': start_ipr, 'pause': pause_ipr, 'restart': restart_ipr, 'stop': stop_ipr,
                'settings': show_settings, 'use_settings': use_render_settings, 'refresh_settings': refresh_settings,
                'help': documentation}

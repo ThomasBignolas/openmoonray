@@ -69,6 +69,9 @@ def stage(install, houdini, worker):
     dcc = repo / 'moonray/moonray_dcc_plugins'
     asset_root = install / 'plugin/houdini'
     shutil.copytree(Path(__file__).with_name('assets'), asset_root, dirs_exist_ok=True)
+    scripts = asset_root / 'scripts/moonray'
+    scripts.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(Path(__file__).with_name('run_bounded.py'), scripts / 'run_bounded.py')
     shutil.copytree(dcc / 'houdini/soho', asset_root / 'soho', dirs_exist_ok=True)
     fix_light_defaults(asset_root)
     add_execution_settings(asset_root)

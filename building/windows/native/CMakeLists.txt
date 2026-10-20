@@ -31,6 +31,11 @@ add_subdirectory("${OMR_ROOT}/moonray/hydra/hdMoonray" hdMoonray)
 add_subdirectory("${OMR_ROOT}/moonray/hydra/moonray_sdr_plugins" moonray_sdr_plugins)
 
 if(BUILD_TESTING)
+    add_executable(test_oidn_failure EXCLUDE_FROM_ALL "${CMAKE_CURRENT_SOURCE_DIR}/../tests/test_oidn_failure.cc")
+    target_link_libraries(test_oidn_failure PRIVATE McrtDenoise::denoiser SceneRdl2::render_logging)
+    add_test(NAME windows_oidn_failure COMMAND test_oidn_failure)
+    set_tests_properties(windows_oidn_failure PROPERTIES LABELS "unit;windows;denoise" TIMEOUT 60)
+
     add_executable(test_texture_file_limit "${CMAKE_CURRENT_SOURCE_DIR}/../tests/test_texture_file_limit.cc")
     target_link_libraries(test_texture_file_limit PRIVATE Moonray::texturing_sampler)
     add_test(NAME windows_texture_file_limit COMMAND test_texture_file_limit "${CMAKE_CURRENT_BINARY_DIR}/texture-file-limit")

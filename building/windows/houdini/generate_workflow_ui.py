@@ -12,6 +12,7 @@ actions = [
     ('preview', 'Render to MPlay', 'Render to MPlay', "'render', True", 'ROP_ifd'),
     ('render', 'Render to Disk', 'Render to Disk', "'render'", 'ROP_usdrender'),
     ('settings', 'Settings', 'Render Settings', "'settings'", 'LOP_rendersettings'),
+    ('geometry', 'Geometry Settings', 'Create Geometry Settings', "'geometry'", 'LOP_rendergeometrysettings'),
     ('color', 'Color Management', 'Create Color Management', "'color'", 'COP2_colorcorrect'),
     ('aovs', 'AOVs', 'Create AOVs', "'aovs'", 'LOP_rendervar'),
     ('deep', 'Deep Output', 'Create Deep Output', "'deep'", 'LOP_renderproduct'),

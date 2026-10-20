@@ -7,10 +7,63 @@ For another Windows PC, see [the portable package guide](PORTABLE.md). The bundl
 includes a user-level installer that rewrites its host and worker paths after
 extraction; copying the current workstation's package JSON alone is insufficient.
 
-For a future classroom pool feeding one viewport, see the
-[Arras preparation kit](../classroom/README.md). Coordinator and network checks
-are available; the native Windows node/router port and two-PC rendering are
-still outstanding. The normal installed package continues to render locally.
+For a classroom pool feeding one viewport, see the
+[Arras kit](../classroom/README.md). Native Windows nodes and the router have
+passed two-worker rendering on this machine. A second physical PC and classroom
+LAN still need validation. The normal installed package renders locally.
+
+## Denoising and geometry controls
+
+In **MoonRay AOVs > Denoising**, enable **Export Albedo and Normal Guides**
+before rendering. This adds `denoise_albedo` from MoonRay's material albedo
+and `denoise_normal` from the signed shading normal. Normal utility passes and
+normal guides can coexist: the delegate now assigns distinct native channel
+names to separate AOVs requesting the same source.
+
+After rendering, click **Denoise Current Frame**. It uses MoonRay's native
+Open Image Denoise CPU implementation in a separate background process. An empty
+Input EXR resolves the node's single selected Render Product at the current
+frame. Set Input EXR explicitly if the render ROP overrides that filename.
+New Render Setups select their own product on the AOV node.
+The default beauty layer is `beauty`; empty selects unprefixed RGB channels.
+For older EXRs without guides, disable **Use Exported Guides**.
+
+The output defaults to `name.denoised.exr`, containing beauty RGBA with unchanged
+alpha and color/display-window metadata. Source AOVs and Cryptomatte remain
+untouched. Existing output files are protected: choose a new name to rerun.
+CPU threads and memory limits are exposed, with **Cancel Denoise** and
+**Open Last Denoise Log**. Defaults use four CPUs, an 8 GB process limit and a
+6 GB free-system-memory floor. This is single-frame spatial denoising, not a
+temporal animation filter; inspect sequences for flicker. Use scene-linear EXRs.
+No display transform is applied.
+
+The command-line denoiser now reads selected layers safely from both packed and
+multipart EXRs. It previously read all image channels into a four-channel buffer.
+It rejects missing layers, non-finite data, mismatched guide windows and deep
+images, and publishes a completed EXR without overwriting existing files.
+OIDN construction now safely releases resources after initialization failure.
+
+RenderMan denoising is not connected. Its
+[documented inputs](https://renderman.atlassian.net/wiki/spaces/REN26/pages/19660959/Advanced%2BDenoise%2BJSON%2BConfig)
+include variance/MSE and sample-count data absent from this integration.
+Albedo and normal guides alone are not equivalent to those inputs.
+The OIDN guide conventions are documented by
+[Intel](https://www.openimagedenoise.org/documentation.html).
+
+Use **MoonRay > Create Geometry Settings** or **Tab > MoonRay Geometry Settings**
+after geometry. Select meshes or implicit surfaces with a Solaris primitive
+pattern. The explicit Mesh Resolution override starts at 4; optional Adaptive
+Error and Smooth Normals overrides expose native MoonRay primvars. Disabling
+an override preserves its upstream value, and bypassing the node removes its
+edits. These controls make subdivision memory and preparation costs manageable.
+They do not change the USD subdivision scheme. Check silhouettes and displacement
+at final camera resolution; edit instance sources rather than instance proxies.
+
+`validate_refinement.py` checks small CPU/XPU renders, guide and utility normals,
+geometry selection and override removal, HIP reload, actual background
+denoising, packed/multipart EXRs, alpha, crop/chromaticities, noise reduction
+and invalid inputs. The native `test_oidn_failure` checks failed construction
+and missing-guide recovery. Validation remains limited to small scenes.
 
 ## Worker reliability and recovery
 
@@ -338,7 +391,7 @@ powershell -ExecutionPolicy Bypass -File building/windows/houdini/Render-Demo.ps
   the settings node; **Render to MPlay** and **Render to Disk** use the render ROP.
 - Work in Solaris (`/stage`). Use a Material Library with the native MoonRay VOP
   nodes and Assign Material LOPs. The package installs 125 native MoonRay VOP
-  assets plus the MoonRay AOVs and MoonRay Deep Output LOPs.
+  assets plus the MoonRay AOVs, Deep Output, Color Management and Geometry Settings LOPs.
 - Set the USD Render ROP renderer to **Moonray**, connect the scene and select
   its Render Settings primitive. Standard USD Render Product/Render Var nodes
   control files and AOVs, including light path expressions.

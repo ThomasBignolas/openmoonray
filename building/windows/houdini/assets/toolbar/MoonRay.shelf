@@ -9,6 +9,7 @@
     <memberTool name="moonray_preview"/>
     <memberTool name="moonray_render"/>
     <memberTool name="moonray_settings"/>
+    <memberTool name="moonray_geometry"/>
     <memberTool name="moonray_color"/>
     <memberTool name="moonray_aovs"/>
     <memberTool name="moonray_deep"/>
@@ -39,6 +40,8 @@ moonray_houdini.run('render', True)]]></script></tool>
 moonray_houdini.run('render')]]></script></tool>
   <tool name="moonray_settings" label="Settings" icon="LOP_rendersettings"><script scriptType="python"><![CDATA[import moonray_houdini
 moonray_houdini.run('settings')]]></script></tool>
+  <tool name="moonray_geometry" label="Geometry Settings" icon="LOP_rendergeometrysettings"><script scriptType="python"><![CDATA[import moonray_houdini
+moonray_houdini.run('geometry')]]></script></tool>
   <tool name="moonray_color" label="Color Management" icon="COP2_colorcorrect"><script scriptType="python"><![CDATA[import moonray_houdini
 moonray_houdini.run('color')]]></script></tool>
   <tool name="moonray_aovs" label="AOVs" icon="LOP_rendervar"><script scriptType="python"><![CDATA[import moonray_houdini

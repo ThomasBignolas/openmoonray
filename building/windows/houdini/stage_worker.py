@@ -19,6 +19,8 @@ sources = [repo / 'build/windows/native/moonray/lib/grid/engine_tool/grid_engine
            repo / 'build/windows/native/moonray/lib/rendering/rndr/rendering_rndr.dll',
            repo / 'build/windows/native/moonray/lib/rendering/pbr/rendering_pbr.dll',
            repo / 'build/windows/native/mcrt_computation/lib/engine/mcrt/computation_engine_mcrt.dll']
+sources += [repo / 'build/windows/native/moonray/cmd/denoise_cmd/denoise.exe',
+            repo / 'build/windows/native/mcrt_denoise/lib/denoiser/denoiser.dll']
 gpu_files = []
 for shader, folder in (('ImageMap', 'Image'), ('UsdUVTexture', 'UsdUVTexture')):
     shader_dir = repo / 'build/windows/native/moonray/dso/map' / folder
@@ -29,7 +31,6 @@ if args.xpu:
     cache = (repo / 'build/windows/native/CMakeCache.txt').read_text()
     if 'MOONRAY_USE_OPTIX:BOOL=ON' not in cache:
         raise RuntimeError('Build with -WithOptix before staging an XPU worker')
-    sources.append(repo / 'build/windows/native/mcrt_denoise/lib/denoiser/denoiser.dll')
     cuda_bin = Path(re.search(r'^CUDAToolkit_BIN_DIR:PATH=(.+)$', cache, re.M)[1])
     cuda_runtime = list(cuda_bin.glob('cudart64_*.dll'))
     # CUDA 13 stores DLLs in bin/x64.

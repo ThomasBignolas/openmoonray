@@ -25,14 +25,16 @@ Project scenes, textures and caches must be transferred separately.
 
 The bundle also contains `Test.ps1`. Supply `-HoudiniDirectory` with the local
 Houdini installation; add `-Xpu` for CPU/XPU primitive and animation checks.
-The tests run with isolated preferences and bounded resources.
+The tests run with isolated preferences and bounded resources, using an explicit
+mesh resolution of 4 for the small sphere checks. This avoids the high default
+tessellation cost of Houdini's implicit sphere during an installation check.
 
 To create a bundle from validated host and worker folders:
 
 ```powershell
 python building/windows/houdini/package_portable.py `
-  --host build/windows/houdini/install-reliability-20261015 `
-  --worker build/windows/houdini/worker-preview-20261014 `
+  --host build/windows/houdini/install-refinement-20261020 `
+  --worker build/windows/houdini/worker-refinement-20261020 `
   --output 'build/windows/houdini/portable/MoonRay Houdini 21.0.729 Windows' --zip
 ```
 

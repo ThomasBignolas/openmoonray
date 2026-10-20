@@ -18,7 +18,8 @@ try {
     $env:HOUDINI_NO_ENV_FILE = '1'
     $threads = [Math]::Max(1, [Math]::Min(4, [Environment]::ProcessorCount - 1))
     $env:HOUDINI_MAXTHREADS = "$threads"
-    $testArgs = @((Join-Path $PSScriptRoot 'tests/validate_default_sphere.py'), '--out', (Join-Path $out 'images'))
+    $testArgs = @((Join-Path $PSScriptRoot 'tests/validate_default_sphere.py'), '--out', (Join-Path $out 'images'),
+                 '--mesh-resolution', '4')
     if ($Xpu) { $testArgs += '--extended' }
     & (Join-Path $PSScriptRoot 'worker/python/python.exe') (Join-Path $PSScriptRoot 'tests/run_bounded.py') `
         --threads $threads --memory-gb 6 --min-free-gb 6 --timeout 180 `

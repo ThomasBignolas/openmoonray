@@ -15,7 +15,7 @@ if (Select-String -LiteralPath "$repo/build/windows/native/CMakeCache.txt" -Patt
 }
 $ErrorActionPreference = 'Continue' # Native tools write ordinary warnings to stderr; check their exit codes below.
 . "$PSScriptRoot/Enter-MoonRayEnvironment.ps1"
-& cmake --build "$repo/build/windows/native" --target grid_engine_tool computation_engine_mcrt ImageMap UsdUVTexture --parallel $Jobs
+& cmake --build "$repo/build/windows/native" --target grid_engine_tool computation_engine_mcrt ImageMap UsdUVTexture denoise --parallel $Jobs
 if ($LASTEXITCODE -ne 0) { throw 'Houdini worker build failed.' }
 & "$repo/build/deps/x64-windows/tools/python3/python.exe" "$PSScriptRoot/houdini/stage_worker.py" `
     --base $runtime.bundle --destination $worker @workerOptions

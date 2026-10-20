@@ -17,6 +17,8 @@ moonray_houdini.run('render', True)]]></scriptCode></scriptItem>
 moonray_houdini.run('render')]]></scriptCode></scriptItem>
 <scriptItem id="moonray_settings"><label>Render Settings</label><scriptCode><![CDATA[import moonray_houdini
 moonray_houdini.run('settings')]]></scriptCode></scriptItem>
+<scriptItem id="moonray_geometry"><label>Create Geometry Settings</label><scriptCode><![CDATA[import moonray_houdini
+moonray_houdini.run('geometry')]]></scriptCode></scriptItem>
 <scriptItem id="moonray_color"><label>Create Color Management</label><scriptCode><![CDATA[import moonray_houdini
 moonray_houdini.run('color')]]></scriptCode></scriptItem>
 <scriptItem id="moonray_aovs"><label>Create AOVs</label><scriptCode><![CDATA[import moonray_houdini

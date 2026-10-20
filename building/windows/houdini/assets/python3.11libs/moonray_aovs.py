@@ -51,10 +51,12 @@ def parameters():
                for key, label, dtype in UTILITY_FIELDS]
     lighting = [hou.ToggleParmTemplate('all_light', 'All Light Contributions', default_value=False,
                     help='Light path expression C.*. Additional custom LPEs can be created with standard Render Var LOPs.')]
+    import moonray_denoise
     return hou.ParmTemplateGroup([product, root,
         hou.FolderParmTemplate('crypto_tab', 'Cryptomatte', crypto),
         hou.FolderParmTemplate('utility_tab', 'Utility Passes', utility),
-        hou.FolderParmTemplate('lighting_tab', 'Lighting', lighting)])
+        hou.FolderParmTemplate('lighting_tab', 'Lighting', lighting),
+        hou.FolderParmTemplate('denoise_tab', 'Denoising', moonray_denoise.parameters())])
 
 
 def cook(lop, controls):
@@ -77,6 +79,8 @@ def cook(lop, controls):
     def make(name, source, dtype, source_type='raw'):
         if not Sdf.Path.IsValidIdentifier(name):
             raise hou.NodeError('AOV layer name must be a valid identifier: ' + name)
+        if root.AppendChild(name) in selected:
+            raise hou.NodeError('Two enabled passes use the layer name ' + name + '. Choose a different Cryptomatte layer name.')
         var = UsdRender.Var.Define(stage, root.AppendChild(name))
         var.CreateSourceNameAttr(source)
         var.CreateSourceTypeAttr(source_type)
@@ -101,6 +105,9 @@ def cook(lop, controls):
             make('Z' if source == 'cameraDepth' else source, source, dtype)
     if values['all_light']:
         make('all_light', 'C.*', 'color3f', 'lpe')
+    if values.get('denoise_guides', False):
+        make('denoise_albedo', 'shader:albedo', 'color3f')
+        make('denoise_normal', 'N', 'normal3f')
     for product in products:
         existing = product.GetOrderedVarsRel().GetTargets()
         product.GetOrderedVarsRel().SetTargets(existing + [path for path in selected if path not in existing])

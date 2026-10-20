@@ -40,6 +40,13 @@ Cryptomatte layers are written to EXR at frame completion by the local worker.
 The primary Cryptomatte plane previews coverage; use the numbered layers in compositing.
 Reference passes need ref_P / ref_N primvars. CryptoS writes fragment data only.
 Use standard Render Var LOPs for additional material AOVs and light path expressions.
+
+The Denoising tab can export albedo and signed normal guides. After rendering,
+Denoise Current Frame runs Open Image Denoise on the CPU in a bounded background
+process. The output is a separate beauty-only EXR with unchanged alpha.
+The original AOV and Cryptomatte file is retained. Choose a new filename for each run.
+Use a scene-linear image. This is spatial denoising; review animation for flicker.
+RenderMan's denoiser needs additional variance passes that are not provided here.
 ''')
 definition.save(str(target))
 assert asset.children(), 'Missing asset contents'
